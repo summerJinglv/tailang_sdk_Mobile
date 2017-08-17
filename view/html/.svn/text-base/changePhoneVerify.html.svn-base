@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>验证身份</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+    <link href="../../images/favicon.ico" rel="shortcut icon"/>
+    <link href="../../css/mui.css" rel="stylesheet"/>
+    <link href="../../css/myBasic.css" rel="stylesheet"/>
+</head>
+<body>
+	<div class="mui-view">
+		<header class="mui-bar mui-bar-nav">
+			<span class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></span>
+			<span class="mui-icon  mui-icon-close-nav mui-pull-right" id="closeActivity"></span>
+			<h1 class="mui-title">验证身份</h1>
+		</header>
+		<div class="mui-content">
+			<ul class="step-nav clearfix">
+				<li class="active">
+					<span>验证身份</span>
+				</li>
+				<li>
+					<span>设置号码</span>
+				</li>
+				<li>
+					<span>设置完成</span>
+				</li>
+			</ul>
+			<div class="mui-content-padded">
+				<div class="mtb10 fs-14 pad10">
+					已绑定的号码：<span id="mobileShow">&nbsp;</span>
+				</div>
+				<input id="mobile" type="hidden">	
+			    <div class="mui-input-row code-row">
+			    	<button type="button" class="mui-btn mui-btn-danger" id="getCode" onclick="getCode()">获取验证码</button>
+			    	<div class="input-wrap mui-input-row">
+			        	<input type="text" id="smsCaptcha" class="mui-input-clear" placeholder="请输入验证码">
+			    	</div>
+			    </div>
+			</div>
+			<div class="pad10">
+				<button type="button" class="mui-btn mui-btn-danger mui-btn-block mb10" onclick="verify()">确定</button>
+				<button type="button" class="mui-btn mui-btn-danger mui-btn-block mui-btn-outlined"  id="serverCenter">联系客服</button>
+			</div>
+		</div>
+	</div>
+	<script src="../../js/jquery-1.11.1.min.js"></script>
+	<script src="../../js/layer/layer.js"></script>
+	<script src="../../js/mui.min.js"></script>
+	<script src="../../js/base64.min.js"></script>
+	<script src="../../js/myCommon.js"></script>
+	<script type="text/javascript">
+		var base64=new Base64();
+		var token=base64.encode(GetQueryString("token"));
+		$.ajax({
+	        url: "/api/member/info",
+	        type: "post",
+	        data:{token:token},
+	        dataType: "json",
+	        success: function(data) {
+	           	console.log(data) 
+	            if(data.code == 1){
+	            	var data=data.data;
+	              	$("#mobile").val(data.mobile);
+	              	$("#mobileShow").html(data.mobile.slice(0,3)+"****"+data.mobile.slice(7));
+	            }
+	        }
+	    });
+		function getCode(){
+			$("#getCode").val("");
+			var mobile=base64.encode($("#mobile").val());
+			var sentType=base64.encode("20");
+			$.ajax({
+		        url: "/api/member/sentSmsCaptcha/ntoken",
+		        type: "post",
+		        data:{token:token,mobile:mobile,sentType:sentType},
+		        dataType: "json",
+		        success: function(data) {
+		            console.log(data);
+		            if(data.code == 1){
+		            	layer.msg("验证码发送成功！");
+		            	var num=120;
+		            	var timer=setInterval(function(){
+		            		num--;
+		            		$("#getCode").attr("disabled",true).html("重新获取("+num+")");
+			            	if(num==0){
+			            		clearInterval(timer);
+			            		$("#getCode").removeAttr("disabled").html("获取验证码");
+			            	}
+		            	},1000)
+		            }else{
+		            	layer.msg(data.msg);
+		            }
+		        }
+		    });
+		}
+		function verify(){
+			if($("#smsCaptcha").val()==""){
+				layer.msg("请输入验证码！")
+				return;
+			}
+			var mobile=base64.encode($("#mobile").val());
+			var sentType=base64.encode("20");
+			var smsCaptcha=base64.encode($("#smsCaptcha").val());
+			$.ajax({
+		        url: "/api/user/checkSms",
+		        type: "post",
+		        data:{token:token,mobile:mobile,sentType:sentType,smsCaptcha:smsCaptcha},
+		        dataType: "json",
+		        success: function(data) {
+		            console.log(data);
+		            if(data.code == 1){
+		            	layer.msg("验证成功！")
+		            	setTimeout(function(){
+		            		openPage('changePhoneInput.html');
+		            	},2000)
+		            }else if(data.code==504){//验证码错误
+		            	layer.msg(data.msg);
+		            }else{
+		            	layer.msg(data.msg);
+		            }
+		        }
+		    });
+		}
+	</script>
+</body>
+</html>

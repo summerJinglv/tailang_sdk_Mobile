@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>礼包详情</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+    <link href="../../images/favicon.ico" rel="shortcut icon"/>
+    <link href="../../css/mui.css" rel="stylesheet"/>
+    <link href="../../css/myBasic.css" rel="stylesheet"/>
+</head>
+<body>
+	<div class="mui-view">
+		<header class="mui-bar mui-bar-nav">
+			<span class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></span>
+			<h1 class="mui-title">礼包详情</h1>
+			<button class="mui-btn mui-btn-blue mui-btn-link mui-pull-right" onclick="openPage('saveBox.html')">存号箱</button>
+		</header>
+		<div class="mui-content">
+			<div class="gD-card">
+				<div class="fs-17 mb10" id="name">&nbsp;</div>
+				<div>礼包内容</div>
+				<div class="text-grey mb10" id="content">&nbsp;</div>
+				<div>有效期：</div>
+				<div class="text-grey mb10">
+					<span id="start_time">&nbsp;</span> 
+					至   
+					<span id="end_time">&nbsp;</span>
+				</div>
+				<div>使用方法：</div>
+				<div class="text-grey" id="scope"></div>
+			</div>
+		</div>
+		<footer class="my-footer-bar pad10" id="getBtn">
+			<button type="button" class="mui-btn-block">&nbsp;</button>
+		</footer>
+	</div>
+	<script src="../../js/jquery-1.11.1.min.js"></script>
+	<script src="../../js/layer/layer.js"></script>
+	<script src="../../js/mui.min.js"></script>
+	<script src="../../js/base64.min.js"></script>
+	<script src="../../js/myCommon.js"></script>
+	<script type="text/javascript">
+		var base64=new Base64();
+		var token=base64.encode(GetQueryString("token"));
+		var giftId=base64.encode(GetQueryString("giftId"));
+		var appInfo=base64.encode(GetQueryString("appInfo"));
+		$.ajax({
+	        url: "/api/member/giftInfo",
+	        type: "post",
+	        data:{token:token,giftId:giftId},
+	        dataType: "json",
+	        success: function(data) {
+	            console.log(data);
+	            if(data.code == 1){
+	            	console.log(data.data);
+	            	var data=data.data;
+	            	$("#name").html(data.name);
+	            	$("#content").html(data.content);
+	            	$("#start_time").html(data.start_time);
+	            	$("#end_time").html(data.end_time);
+	            	$("#scope").html(data.scope);
+	            	var buttonHtml="";
+					if(data.is_out_time==0){
+						buttonHtml='<button type="button" class="mui-btn mui-btn-danger mui-btn-block" onclick="get('+GetQueryString("giftId")+')">领取</button>';
+					}else if(data.is_out_time==1){
+						buttonHtml='<button type="button" class="mui-btn  mui-btn-outlined disabled mui-btn-block">已结束</button>';
+					}
+					if(data.remain==0){
+						buttonHtml='<button type="button" class="mui-btn  mui-btn-outlined disabled mui-btn-block">已领完</button>';
+					};
+					if(data.isReceive==1){
+						buttonHtml='<button type="button" class="mui-btn  mui-btn-outlined disabled mui-btn-block">已领过</button>';
+					}
+					$("#getBtn").html(buttonHtml);
+	            }
+	        }
+	    });
+		function get(giftId){//领取礼包
+			$.ajax({
+		        url: "/api/member/receiveGift",
+		        type: "post",
+		        data:{token:token,appInfo:appInfo,giftId:base64.encode(giftId.toString())},
+		        dataType: "json",
+		        success: function(data) {
+		            console.log(data);
+		            if(data.code == 1){
+		            	console.log(data.data)
+		            	try {
+		            		if(GetQueryString("appType")=="android"){
+		            			window.sdk.copyText(data.data.code);
+		            		}else if(GetQueryString("appType")=="ios"){
+		            			location.href = "jfsdk://copyText?"+data.data.code;
+		            		}
+	            		} catch (e) {
+	            			console.log(e)
+	            		}
+		            	layer.msg("已成功复制礼包码，您也可以在存号箱查看礼包码");
+		            	setTimeout(function(){
+		            		window.location.reload();
+		            	},2000)
+		            }else{
+		            	layer.msg(data.msg);
+		            }
+		        }
+		    });
+		}
+	</script>
+</body>
+</html>

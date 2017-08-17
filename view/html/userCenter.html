@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>用户中心</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+    <link href="../../images/favicon.ico" rel="shortcut icon"/>
+    <link href="../../css/mui.css" rel="stylesheet"/>
+    <link href="../../css/myBasic.css" rel="stylesheet"/>
+</head>
+<body>
+	<div class="mui-view">
+		<header class="mui-bar mui-bar-nav">
+		    <span class="mui-icon mui-icon-left-nav mui-pull-left" id="returnHeader"></span>
+		    <span class="mui-icon  mui-icon-close-nav mui-pull-right" id="closeActivity"></span>
+		    <h1 class="mui-title">用户中心</h1>
+		</header>
+		<div class="mui-content">
+			<ul class="mui-table-view mG-userInfor">
+				<li class="mui-table-view-cell mui-media">
+					<a href="javascript:;">
+						<div class="mui-media-object mui-pull-left">
+							<img id="portrait" class="" src="../../images/userPhoto.jpg">
+						</div>	
+						<div class="mui-media-body">
+							<div class="userInfor-item clearfix">
+								<label>账号ID：</label>
+								<div id="userName"></div>
+							</div>
+							<div class="userInfor-item clearfix">
+								<label>账户余额：</label>
+								<div id="remain"></div>
+							</div>
+							<div class="userInfor-item clearfix">
+								<label>实名认证：</label>
+								<div id="isProve"></div>
+							</div>
+							<div class="userInfor-item clearfix">
+								<label>登录手机：</label>
+								<div id="mobile"></div>
+							</div>
+						</div>
+					</a>
+				</li>
+			</ul>
+			
+			<ul class="mui-table-view mui-table-view-chevron mt10">
+				<li class="mui-table-view-cell">
+					<a href="javascript:;" class="mui-navigate-right" onclick="openPage('changePwd.html')">修改密码</a>
+				</li>
+				<li class="mui-table-view-cell">
+					<a href="javascript:;" class="mui-navigate-right" id="setPayPwd">设置支付密码</a>
+				</li>
+				<li class="mui-table-view-cell">
+					<a href="javascript:;" class="mui-navigate-right" onclick="openPage('registeredPhone.html')">更换手机</a>
+				</li>
+				<li class="mui-table-view-cell">
+					<a href="javascript:;" class="mui-navigate-right" id="serverCenter">客服中心</a>
+				</li>
+			</ul>
+			<ul class="mui-table-view mui-table-view-chevron mt10">
+				<li class="mui-table-view-cell">
+					<a href="javascript:;" class="mui-navigate-right" id="costRecord">消费记录</a>
+				</li>
+			</ul>
+		</div>
+	</div>
+	<script src="../../js/jquery-1.11.1.min.js"></script>
+	<script src="../../js/mui.min.js"></script>
+	<script src="../../js/base64.min.js"></script>
+	<script src="../../js/myCommon.js"></script>
+	<script type="text/javascript">
+		var base64=new Base64();
+		var token=base64.encode(GetQueryString("token"));
+		$.ajax({
+            url: "/api/member/info",
+            type: "post",
+            data:{token:token},
+            dataType: "json",
+            success: function(data) {
+                console.log(data);
+                if(data.code == 1){
+                	var data=data.data;
+                	console.log(data) 
+                  	$("#userName").html(data.username);
+                 	$("#remain").html(data.remain);
+                  	var isProveArr=["已认证","未认证"];
+                  	$("#isProve").html(isProveArr[data.isProve-1]);
+                  	$("#mobile").html(data.mobile);
+                  	if(data.portrait==""){
+                  		$("#portrait").attr("src","../../images/userPhoto.jpg");
+                  	}else{
+                  		$("#portrait").attr("src",data.portrait);
+                  	}
+                }
+            }
+        });
+      
+	</script>
+</body>
+</html>

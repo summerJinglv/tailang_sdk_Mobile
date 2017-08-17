@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>礼包中心</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+    <link href="../../images/favicon.ico" rel="shortcut icon"/>
+    <link href="../../css/mui.css" rel="stylesheet"/>
+    <link href="../../css/myBasic.css" rel="stylesheet"/>
+</head>
+<body>
+	<div class="mui-view">
+		<header class="mui-bar mui-bar-nav">
+			<span class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></span>
+			<h1 class="mui-title">我领取的号</h1>
+		</header>
+		<div class="mui-content mui-scroll-wrapper" id="pullrefresh">
+			<div class="mui-scroll">
+				<div id="saveBoxList" class="bg-grey"></div>
+			</div>
+			<div class="msgNotice">&nbsp;</div>
+		</div>
+	</div>
+	<script src="../../js/jquery-1.11.1.min.js"></script>
+	<script src="../../js/layer/layer.js"></script>
+	<script src="../../js/mui.min.js"></script>
+	<script src="../../js/base64.min.js"></script>
+	<script src="../../js/myCommon.js"></script>
+	<script type="text/javascript">
+		var base64=new Base64();
+		var token=base64.encode(GetQueryString("token"));
+		var appInfo=base64.encode(GetQueryString("appInfo"));
+		
+		function copy(obj){//复制激活码
+			var code=$(obj).siblings("div").find("span").html();
+			layer.msg("已成功复制激活码："+code);
+			try {
+				if(GetQueryString("appType")=="android"){
+        			window.sdk.copyText(code);
+        		}else if(GetQueryString("appType")=="ios"){
+        			location.href = "jfsdk://copyText?"+code;
+        		}
+    		} catch (e) {
+    			console.log(e)
+    		}
+		}
+		
+		mui.init({//上拉加载下拉刷新
+			pullRefresh:{
+				container:'#pullrefresh',
+				down:{
+					callback: pulldownRefresh
+				},
+				up:{
+			　　		contentrefresh: '正在加载...',
+					contentnomore : '没有更多数据了',
+			　　		callback: pullupRefresh,
+			　　	}
+			}
+		});
+		//加载更多
+		var counter = 1;//计数器
+		var pageSize = 10;//一页的数据条数
+		var totalRows = 0;//开始总条数
+		var Flag=false;
+		var curPage=1;
+		var dataLen=10;
+		giftList();
+		
+		function giftList(){//获取指定页数据
+			var result = "";
+		  	$.ajax({
+		  		type: 'post',
+		   		url: '/api/member/getGiftCodeBox',
+		   		dataType: "json",
+		   		data: {token:token,appInfo:appInfo,pageSize:pageSize,totalRows:totalRows,gotopage:counter},
+		   		success: function (data) {
+				   console.log(data);
+		           if(data.code == 1){
+		        	   var dataList=data.data.dataList;
+					   //判断lastPage是否true，是否为最后一页
+					   if (data.data.lastPage==true) {
+						   Flag=true;
+					   }
+					   curPage=data.data.curPage;
+					   dataLen=dataList.length;
+					   if(curPage==1&&dataLen==0){
+						   mui('#pullrefresh').pullRefresh().setStopped(true);
+						   $(".msgNotice").html("您还没有领取的号!");
+					   }
+					   mui('#pullrefresh').pullRefresh().endPullupToRefresh(Flag); //参数为true代表没有更多数据了。
+					   if(Flag==false){
+					     counter++;
+					   }
+					   totalRows = data.data.totalRows;
+				       $.each(data.data.dataList,function(i,value) {
+				    	   result+='<div class="mui-card sB-card">'+
+										'<div class="mui-card-content">'+
+											'<div class="mui-card-content-inner">'+
+												'<div class="fs-17 mb10">'+value.title+'</div>'+
+												'<div class="text-grey mb10">'+value.content+'</div>'+
+												'<div class="fs-0">'+
+													'<button type="button" class="mui-btn mui-btn-l mui-btn-danger" onclick="copy(this)">复制</button>'+
+													'<div class="mui-btn mui-btn-l mui-ellipsis">激活码：<span>'+value.code+'</span></div>'+
+												'</div>'+
+											'</div>'+
+										'</div>'+
+									'</div>';
+					  });
+				      $("#saveBoxList").append(result);
+		        }
+		   }
+		  }
+		 );
+		}
+		function pullupRefresh(){//上拉加载
+			setTimeout(function(){
+			  giftList();
+			}, 1500);
+		}
+		function pulldownRefresh(){//下拉刷新
+	        setTimeout(function () { 
+	            counter = 1;//计数器
+	       		pageSize = 10;//一页的数据条数
+	       		totalRows = 0;//开始总条数
+	       		Flag = false;
+	       		$("#saveBoxList").html("");
+	       		mui('#pullrefresh').pullRefresh().refresh(true);
+	       		giftList();
+	        	mui('#pullrefresh').pullRefresh().endPulldownToRefresh(); //refresh completed  
+	        }, 1500);  
+	    }  
+	</script>
+</body>
+</html>

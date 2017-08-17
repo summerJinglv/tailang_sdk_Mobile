@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>礼包中心</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+    <link href="../../images/favicon.ico" rel="shortcut icon"/>
+    <link href="../../css/mui.css" rel="stylesheet"/>
+    <link href="../../css/myBasic.css" rel="stylesheet"/>
+</head>
+<body>
+	<div class="mui-view">
+		<header class="mui-bar mui-bar-nav">
+			<span class="mui-icon mui-icon-left-nav mui-pull-left" onclick="headerReturn()"></span>
+			<h1 class="mui-title">礼包中心</h1>
+			<button class="mui-btn mui-btn-blue mui-btn-link mui-pull-right" onclick="openPage('saveBox.html')">存号箱</button>
+		</header>
+		<div class="mui-content mui-scroll-wrapper" id="pullrefresh">
+			<div class="mui-scroll">
+				<div id="giftList" class="bg-grey"></div>
+			</div>
+			<div class="msgNotice">&nbsp;</div>
+		</div>
+	</div>
+	<script src="../../js/jquery-1.11.1.min.js"></script>
+	<script src="../../js/layer/layer.js"></script>
+	<script src="../../js/mui.min.js"></script>
+	<script src="../../js/base64.min.js"></script>
+	<script src="../../js/myCommon.js"></script>
+	<script type="text/javascript">
+	var base64=new Base64();
+	var token=base64.encode(GetQueryString("token"));
+	var appInfo=base64.encode(GetQueryString("appInfo"));
+	
+	function openGiftDetail(giftId){//跳转至指定礼包详情页面
+		window.location.href='giftDetail.html?giftId='+giftId+"&"+getURLRs(window.location.href);
+	}
+	function get(giftId){//领取礼包
+		$.ajax({
+	        url: "/api/member/receiveGift",
+	        type: "post",
+	        data:{token:token,appInfo:appInfo,giftId:base64.encode(giftId.toString())},
+	        dataType: "json",
+	        success: function(data) {
+	            console.log(data);
+	            if(data.code == 1){
+	            	console.log(data.data);
+	            	try {
+	            		if(GetQueryString("appType")=="android"){
+	            			window.sdk.copyText(data.data.code);
+	            		}else if(GetQueryString("appType")=="ios"){
+	            			location.href = "jfsdk://copyText?"+data.data.code;
+	            		}
+            		} catch (e) {
+            			console.log(e)
+            		}
+	            	layer.msg("已成功复制礼包码，您也可以在存号箱查看礼包码");
+	            	setTimeout(function(){
+	            		window.location.reload();
+	            	},2000)
+	            }else{
+	            	layer.msg(data.msg);
+	            }
+	        }
+	    });
+	}	
+	
+	mui.init({//上拉加载下拉刷新
+		pullRefresh:{
+			container:'#pullrefresh',
+			down:{
+				callback: pulldownRefresh
+			},
+			up:{
+		　　　　contentrefresh: '正在加载...',
+			   contentnomore : '没有更多数据了',
+		　　　　callback: pullupRefresh
+		　　	}
+		}
+	});
+	//加载更多
+	var counter = 1;//计数器
+	var pageSize = 10;//一页的数据条数
+	var totalRows = 0;//开始总条数
+	var Flag = false;
+	var curPage=1;
+	var dataLen=10;
+	giftList();
+	function giftList(){//获取指定页数据
+		var result = "";
+	  	$.ajax({
+	  		type: 'post',
+	   		url: '/api/member/giftList',
+	   		dataType: "json",
+	   		data: {token:token,appInfo:appInfo ,pageSize:pageSize,totalRows:totalRows,gotopage:counter},
+	   		success: function (data) {
+			   console.log(data);
+	           if(data.code == 1){
+	        	   var dataList=data.data.dataList;
+				   totalRows = data.data.totalRows;
+				   //判断lastPage是否true，是否为最后一页
+				   if (data.data.lastPage==true) {
+					   Flag=true;
+				   }
+				   curPage=data.data.curPage;
+				   dataLen=dataList.length;
+				   if(curPage==1&&dataLen==0){
+					   mui('#pullrefresh').pullRefresh().setStopped(true);
+					   $(".msgNotice").html("您还没有礼包!");
+				   }
+				   mui('#pullrefresh').pullRefresh().endPullupToRefresh(Flag); //参数为true代表没有更多数据了。
+				   if(Flag==false){
+				     counter++;
+				   }
+			       $.each(data.data.dataList,function(i,value) {
+			    	   var buttonHtml="";
+			    	   if(value.is_out_time==0){
+			    		   buttonHtml='<button type="button" class="mui-btn mui-btn-danger mui-btn-outlined mw80" onclick="get('+value.id+')">领取</button>';
+			    	   }else if(value.is_out_time==1){
+			    		   buttonHtml='<button type="button" class="mui-btn  mui-btn-outlined  disabled mw80">已结束</button>';
+			    	   }
+			    	   if(value.remain==0){
+			    		   buttonHtml='<button type="button" class="mui-btn  mui-btn-outlined  disabled mw80">已领完</button>';
+			    	   };
+			    	   if(value.isReceive==1){
+			    		   buttonHtml='<button type="button" class="mui-btn  mui-btn-outlined  disabled mw80">已领过</button>';
+			    	   }
+			    	   result+='<div class="gC-card">'+
+								'<div class="gC-card-l" onclick="openGiftDetail('+value.id+')">'+
+									'<div class="fs-17 mb10">'+value.name+'</div>'+
+									'<div class="text-grey">'+value.title+'</div>'+
+								'</div>'+
+								'<div class="gC-card-r">'+buttonHtml+'</div>'+
+							  '</div>';
+				  });
+			      $("#giftList").append(result);
+			      $(".gC-card").on('tap','.gC-card-l',function (event){//解决mui下拉刷新容器中的click事件有延迟
+		    	  		this.click();
+		    	  });
+	        }
+	   }
+	  }
+	 );
+	}
+	function pullupRefresh(){//上拉加载更多
+		setTimeout(function(){
+		  giftList();
+		}, 1500);
+	}
+	function pulldownRefresh(){//下拉刷新
+        setTimeout(function () { 
+       		counter = 1;//计数器
+       		pageSize = 10;//一页的数据条数
+       		totalRows = 0;//开始总条数
+       		Flag = false;
+       		$("#giftList").html("");
+       		mui('#pullrefresh').pullRefresh().refresh(true);
+       		giftList();
+        	mui('#pullrefresh').pullRefresh().endPulldownToRefresh(); //refresh completed  
+        }, 1500);  
+    }  
+	
+	
+	</script>
+</body>
+</html>

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>已注册手机号</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+    <link href="../../images/favicon.ico" rel="shortcut icon"/>
+    <link href="../../css/mui.css" rel="stylesheet"/>
+    <link href="../../css/myBasic.css" rel="stylesheet"/>
+</head>
+<body>
+	<div class="mui-view">
+		<header class="mui-bar mui-bar-nav">
+			<span class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></span>
+			<span class="mui-icon  mui-icon-close-nav mui-pull-right" id="closeActivity"></span>
+			<h1 class="mui-title">已注册手机号</h1>
+		</header>
+		<div class="mui-content">
+			<ul class="mui-table-view mui-table-view-chevron mtb10">
+				<li class="mui-table-view-cell">
+					<a href="javascript:;" class="mui-navigate-right" onclick="openPage('changePhoneVerify.html')">
+						<span class="text-grey">手机号码</span>
+						<span id="mobileShow">&nbsp;</span>
+						<input id="mobile" type="hidden">	
+						<span class="mui-pull-right change">更换号码</span>
+					</a>
+				</li>
+			</ul>
+			<div class="pad10">
+				<button type="button" class="mui-btn mui-btn-danger mui-btn-outlined mui-btn-block"  id="serverCenter">联系客服</button>
+			</div>
+		</div>
+	</div>
+	<script src="../../js/jquery-1.11.1.min.js"></script>
+	<script src="../../js/layer/layer.js"></script>
+	<script src="../../js/mui.min.js"></script>
+	<script src="../../js/base64.min.js"></script>
+	<script src="../../js/myCommon.js"></script>
+	<script type="text/javascript">
+		var base64=new Base64();
+		var token=base64.encode(GetQueryString("token"));
+		$.ajax({
+	        url: "/api/member/info",
+	        type: "post",
+	        data:{token:token},
+	        dataType: "json",
+	        success: function(data) {
+	           	console.log(data) 
+	            if(data.code == 1){
+	            	var data=data.data;
+	              	$("#mobile").val(data.mobile);
+	              	$("#mobileShow").html(data.mobile.slice(0,3)+"****"+data.mobile.slice(7));
+	            }
+	        }
+	    });
+	</script>
+</body>
+</html>

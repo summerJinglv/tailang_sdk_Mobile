@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>客服中心</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+    <link href="../../images/favicon.ico" rel="shortcut icon"/>
+    <link href="../../css/mui.css" rel="stylesheet"/>
+    <link href="../../css/myBasic.css" rel="stylesheet"/>
+</head>
+<body>
+	<div class="mui-view">
+		<header class="mui-bar mui-bar-nav">
+			<span class="mui-icon mui-icon-left-nav mui-pull-left" onclick="headerReturn()"></span>
+			<span class="mui-icon  mui-icon-close-nav mui-pull-right" id="closeActivity"></span>
+			<h1 class="mui-title">客服中心</h1>
+		</header>
+		<div class="mui-content">
+			<ul class="mui-table-view mui-table-view-chevron mt10">
+				<li class="mui-table-view-cell">
+					<span class="text-grey">客服电话：</span>029 - 88325033
+				</li>
+				<li class="mui-table-view-cell">
+					<span  class="text-grey">工作时间：</span>工作日 09:00--17:00
+				</li>
+			</ul>
+		</div>
+	</div>
+	<script src="../../js/jquery-1.11.1.min.js"></script>
+	<script src="../../js/layer/layer.js"></script>
+	<script src="../../js/mui.min.js"></script>
+	<script src="../../js/base64.min.js"></script>
+	<script src="../../js/myCommon.js"></script>
+</body>
+</html>

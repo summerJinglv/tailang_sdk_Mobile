@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>找回密码</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+    <link href="../../images/favicon.ico" rel="shortcut icon"/>
+    <link href="../../css/mui.css" rel="stylesheet"/>
+    <link href="../../css/myBasic.css" rel="stylesheet"/>
+</head>
+<body>
+	<div class="mui-view">
+		<header class="mui-bar mui-bar-nav">
+			<span class="mui-icon mui-icon-left-nav mui-pull-left" id="returnHeader"></span>
+			<span class="mui-icon  mui-icon-close-nav mui-pull-right" id="closeActivity"></span>
+			<h1 class="mui-title">找回密码</h1>
+		</header>
+		<div class="mui-content">
+			<div class="mui-content-padded">
+				<div class="mtb10 fs-16">请输入要找回的账号</div>
+				<div class="mui-input-row ">
+			        <input type="text" id="mobile" class="mui-input-clear" placeholder="手机号"><span class="mui-icon mui-icon-clear mui-hidden"></span>
+			    </div>
+			</div>
+			<div class="pad10">
+				<button type="button" class="mui-btn mui-btn-danger mui-btn-block mb10" onclick="accountVerify()">确定</button>
+				<button type="button" class="mui-btn mui-btn-danger mui-btn-block mui-btn-outlined"  id="serverCenter">联系客服</button>
+			</div>
+		</div>
+	</div>
+	<script src="../../js/jquery-1.11.1.min.js"></script>
+	<script src="../../js/layer/layer.js"></script>
+	<script src="../../js/mui.min.js"></script>
+	<script src="../../js/base64.min.js"></script>
+	<script src="../../js/myCommon.js"></script>
+	<script type="text/javascript">
+		var base64=new Base64();
+		function accountVerify(){
+			if($("#mobile").val()==""){
+				layer.msg("请输入手机号！");
+				return;
+			}
+			var regMobile=new RegExp(/^1(3|4|5|7|8)\d{9}$/);
+			if(!regMobile.test($("#mobile").val())){ 
+				layer.msg("手机号码有误，请重新输入！");  
+		        return; 
+		    } 
+			var mobile=base64.encode($("#mobile").val());
+			$.ajax({
+		        url: "/api/member/validateMobile/ntoken",
+		        type: "post",
+		        data:{mobile:mobile},
+		        dataType: "json",
+		        success: function(data) {
+		            console.log(data);
+		            if(data.code == 1){
+		            	window.location.href="findPwdWay.html?mobile="+$("#mobile").val()+"&username="+data.data.username+"&"+getURLRs(window.location.href);
+		            }else if(data.code==0){//用户不存在
+		            	layer.msg("用户不存在");
+		            }else{
+		            	layer.msg(data.msg);
+		            }
+		        }
+		    });
+			
+		}
+	</script>
+</body>
+</html>

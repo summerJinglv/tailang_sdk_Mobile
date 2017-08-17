@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>设置完成</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+    <link href="../../images/favicon.ico" rel="shortcut icon"/>
+    <link href="../../css/mui.css" rel="stylesheet"/>
+    <link href="../../css/myBasic.css" rel="stylesheet"/>
+</head>
+<body>
+	<div class="mui-view">
+		<header class="mui-bar mui-bar-nav">
+			<span class="mui-icon mui-icon-left-nav mui-pull-left" onclick="openPage('userCenter.html')"></span>
+			<span class="mui-icon  mui-icon-close-nav mui-pull-right" id="closeActivity"></span>
+			<h1 class="mui-title">设置完成</h1>
+		</header>
+		<div class="mui-content">
+			<ul class="step-nav clearfix">
+				<li>
+					<span>验证身份</span>
+				</li>
+				<li>
+					<span>设置号码</span>
+				</li>
+				<li class="active">
+					<span>设置完成</span>
+				</li>
+			</ul>
+			<div class="mui-content-padded">
+				<div class="cPEnd-msg mui-text-center">
+					<i class="mui-icon mui-icon-checkbox-filled"></i>
+					<div class="fs-16">
+			 			您可以用新的手机号码登录游戏了！
+					</div>	
+			 	</div>
+			</div>
+		</div>
+	</div>
+	<script src="../../js/jquery-1.11.1.min.js"></script>
+	<script src="../../js/layer/layer.js"></script>
+	<script src="../../js/mui.min.js"></script>
+	<script src="../../js/base64.min.js"></script>
+	<script src="../../js/myCommon.js"></script>
+	<script type="text/javascript">
+		setTimeout(function(){
+			if(GetQueryString("appType")=="android"){
+				window.sdk.updateMobileSuccess();
+			}else if(GetQueryString("appType")=="ios"){
+				location.href= "jfsdk://updateMobileSuccess";
+			}
+		},2000)
+	</script>
+</body>
+</html>

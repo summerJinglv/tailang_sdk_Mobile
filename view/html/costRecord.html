@@ -1,0 +1,334 @@
+<!doctype html>
+<html lang="en">
+	<head>
+    	<meta charset="utf-8">
+	    <title>消费记录</title>
+	    <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+	    <link href="../../images/favicon.ico" rel="shortcut icon"/>
+	    <link href="../../css/mui.css" rel="stylesheet"/>
+	    <link href="../../css/myBasic.css" rel="stylesheet"/>
+    	<style>
+			.mui-bar~.mui-content .mui-fullscreen {
+				top: 44px;
+				height: auto;
+			}
+			.mui-pull-top-tips {
+				position: absolute;
+				top: -20px;
+				left: 50%;
+				margin-left: -25px;
+				width: 40px;
+				height: 40px;
+				border-radius: 100%;
+				z-index: 1;
+			}
+			.mui-bar~.mui-pull-top-tips {
+				top: 24px;
+			}
+			.mui-pull-top-wrapper {
+				width: 42px;
+				height: 42px;
+				display: block;
+				text-align: center;
+				background-color: #fff;
+				border: 1px solid #ddd;
+				border-radius: 25px;
+				background-clip: padding-box;
+				box-shadow: 0 4px 10px #eee;
+				overflow: hidden;
+			}
+			.mui-pull-top-tips.mui-transitioning {
+				-webkit-transition-duration: 200ms;
+				transition-duration: 200ms;
+			}
+			.mui-pull-top-tips .mui-pull-loading {
+				margin: 0;
+			}
+			.mui-pull-top-wrapper .mui-icon,
+			.mui-pull-top-wrapper .mui-spinner {
+				margin-top: 7px;
+			}
+			.mui-pull-top-canvas {
+				overflow: hidden;
+				background-color: #fff;
+				border-radius: 40px;
+				box-shadow: 0 4px 10px #ddd;
+				width: 40px;
+				height: 40px;
+				margin: 0 auto;
+			}
+			.mui-pull-top-canvas canvas {
+				width: 40px;
+			}
+			.mui-segmented-control.mui-segmented-control-inverted ~ .mui-slider-progress-bar{background:none;position:absolute;top:47px;z-index:2}
+		</style>
+	</head>
+	<body>
+		<header class="mui-bar mui-bar-nav">
+			<span class="mui-icon mui-icon-left-nav mui-pull-left" onclick="headerReturn()"></span>
+			<span class="mui-icon  mui-icon-close-nav mui-pull-right" id="closeActivity"></span>
+			<h1 class="mui-title">消费记录</h1>
+		</header>
+
+		<div class="mui-content chexian offter-list cRe-manage">
+			<div id="slider" class="mui-slider mui-fullscreen">
+				<div id="sliderSegmentedControl" class="mui-scroll-wrapper mui-slider-indicator mui-segmented-control mui-segmented-control-inverted">
+					<div class="mui-scroll slidertab">
+						<a class="mui-control-item mui-active" href="#cRItem2" tapcat='2'>
+							已付款
+						</a>
+						<a class="mui-control-item" href="#cRItem1" tapcat='1'>
+							待付款
+						</a>
+						<a class="mui-control-item" href="#cRItem3" tapcat='3'>
+							付款失败
+						</a>
+					</div>
+				</div>
+				<div id="sliderProgressBar" class="mui-slider-progress-bar mui-col-xs-4">
+					<span class="self-bar"></span>	
+				</div> 
+				<div class="mui-slider-group cR-slider-group">
+					<div id="cRItem2" class="mui-slider-item mui-control-content mui-active">
+						<div class="mui-scroll-wrapper" id="wrapper2">
+							<div class="mui-scroll" >
+								<div id="scroll2" class="ajax-content" tappage='1'></div>
+							</div>
+							<div class="msgNotice msgNotice2">&nbsp;</div>
+						</div>
+					</div>
+					<div id="cRItem1" class="mui-slider-item mui-control-content">
+						<div class="mui-scroll-wrapper" id="wrapper1">
+							<div class="mui-scroll">
+								<div id="scroll1"  class="ajax-content" tappage='1'></div>
+							</div>
+							<div class="msgNotice msgNotice1">&nbsp;</div>
+						</div>
+					</div>
+					<div id="cRItem3" class="mui-slider-item mui-control-content">
+						<div class="mui-scroll-wrapper" id="wrapper3">
+							<div class="mui-scroll" >
+								<div id="scroll3" class="ajax-content" tappage='1'></div>
+							</div>
+							<div class="msgNotice msgNotice3">&nbsp;</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<script src="../../js/jquery-1.11.1.min.js"></script>
+		<script src="../../js/layer/layer.js"></script>
+		<script src="../../js/mui.min.js"></script>
+		<script src="../../js/base64.min.js"></script>
+		<script src="../../js/myCommon.js"></script>
+		<script src="../../js/mui.pullToRefresh.js"></script>
+		<script src="../../js/mui.pullToRefresh.material.js"></script>
+		<script>
+			var base64=new Base64();
+			var token=base64.encode(GetQueryString("token"));
+			var appInfo=base64.encode(GetQueryString("appInfo"));
+		
+			mui.init();
+			//阻尼系数
+			var deceleration = mui.os.ios?0.003:0.0009;
+			mui('.mui-scroll-wrapper').scroll({
+			    bounce: false,
+			    indicators: true, //是否显示滚动条
+			    deceleration:deceleration
+			});
+			var page = 0;
+			var totalRows1 = 0;//tab1开始总条数
+			var totalRows2 = 0;//tab2开始总条数
+			var totalRows3 = 0;//tab3开始总条数
+			var pagesize=10;//每次下拉加载条数
+			var count = 0;
+			var curPage=1;//当前页
+			var dataLen=10;//数据个数
+			//滑动初始加载
+			document.querySelector('.mui-slider').addEventListener('slide', function(event) {
+				var self=this;
+				curPage=1;
+				dataLen=10;
+				var this_ajaxContent = $('.mui-slider').find('.mui-slider-group').find('.mui-slider-item').eq(event.detail.slideNumber).find('.ajax-content');
+				var this_page = this_ajaxContent.attr('tappage');
+				if(this_page == '1') {
+					var ajaxContent = this_ajaxContent.get(0);
+					var status=this_ajaxContent.get(0).getAttribute('id').slice(6);
+					ajax_load( ajaxContent,this_page, pagesize,status,2);
+					if($("#scroll"+status).find(".cR-ul").length==0){
+						if($("#scroll"+status).find(".msgNotice").length==0){
+							$("#scroll"+status).append('<div class="msgNotice">还没有记录</div>');
+						}
+						$("#wrapper"+status).find(".mui-pull-bottom-tips").hide()
+					}else if($("#scroll"+status).find(".cR-ul").length<pagesize){
+						if($("#scroll"+status).find(".msgNotice").length==0){
+							$("#scroll"+status).append('<div class="msgNotice">没有更多了</div>');
+						}
+						$("#wrapper"+status).find(".mui-pull-bottom-tips").hide()
+					}
+				}
+			}); 
+			//循环初始化所有下拉刷新，上拉加载。
+			$.each($('.mui-slider-group .mui-scroll'), function(index, pullRefreshEl) {
+				mui(pullRefreshEl).pullToRefresh({
+					down: {
+					    style:'circle',//必选，下拉刷新样式，目前支持原生5+ ‘circle’ 样式
+				        color:'#a00', //可选，默认“#2BD009” 下拉刷新控件颜色
+				        height:80,//可选,默认50.触发下拉刷新拖动距离,
+				        auto: true,//可选,默认false.首次加载自动上拉刷新一次
+				        contentdown : "",//可选，在下拉可刷新状态时，下拉刷新控件上显示的标题内容
+			            contentover : "",//可选，在释放可刷新状态时，下拉刷新控件上显示的标题内容
+			            contentrefresh : "正在刷新...",//可选，正在刷新状态时，下拉刷新控件上显示的标题内容
+						callback: function() {
+							//window.location.reload();
+							totalRows1 = 0;//tab1开始总条数
+							totalRows2 = 0;//tab2开始总条数
+							totalRows3 = 0;//tab3开始总条数
+							curPage=1;
+							dataLen=10;
+							var self = this;
+							setTimeout(function() {
+								var ajaxContent = self.element.querySelector('.ajax-content');
+								var tappage = 0;
+								var status=self.element.querySelector('[id^="scroll"]').id.slice(6);
+								ajaxContent.setAttribute('tappage','1');
+								ajax_load(ajaxContent,tappage, pagesize,status,1);
+								self.endPullDownToRefresh(true);
+								self.refresh(true);
+							}, 1000);
+						}
+					},
+					up: {
+						contentrefresh: '正在加载...',
+						contentnomore:'没有更多了',
+						contentdown: '上拉显示更多',
+						callback: function() { 
+							var self = this;
+							setTimeout(function() {
+								var ajaxContent = self.element.querySelector('.ajax-content');
+								var tappage = parseInt(ajaxContent.getAttribute('tappage'))+1;
+								var status=self.element.querySelector('[id^="scroll"]').id.slice(6);
+								var pullSize=ajaxContent.getAttribute('tapcount');
+								ajax_load(ajaxContent,tappage, pagesize,status,1);
+								self.endPullUpToRefresh(tappage*pagesize>pullSize);
+							}, 1000);
+						}
+					}
+				});
+				
+				//初始化加载第一个tab
+				if(index=='0'){
+					var self = this;
+					first_ajaxContent = this.querySelector('.ajax-content');
+					status=first_ajaxContent.getAttribute('id').slice(6);
+					var first_page = first_ajaxContent.getAttribute('tappage');
+					if(first_page=='1'){
+						ajax_load(first_ajaxContent,first_page,pagesize,status,2);
+						if($("#scroll"+status).find(".cR-ul").length==0){
+							if($("#scroll"+status).find(".msgNotice").length==0){
+								$("#scroll"+status).append('<div class="msgNotice">还没有记录</div>');
+							}
+							$("#wrapper"+status).find(".mui-pull-bottom-tips").hide();
+						}else if($("#scroll"+status).find(".cR-ul").length<pagesize){
+							if($("#scroll"+status).find(".msgNotice").length==0){
+								$("#scroll"+status).append('<div class="msgNotice">没有更多了</div>');
+							}
+							$("#wrapper"+status).find(".mui-pull-bottom-tips").hide();
+						}
+					}
+				}
+			});
+			function ajax_load(ajaxContent,gotopage,pageSize,status,slideType) {
+				var status=status;
+				if(status==2){
+					totalRows=totalRows2;
+				}else if(status==1){
+					totalRows=totalRows1;
+				}else if(status==3){
+					totalRows=totalRows3;
+				}
+				var p = gotopage;
+				if(curPage>=1&&dataLen==10){
+					mui.ajax({
+						url: '/api/finance/payRecord',
+						type: 'post', //HTTP请求类型
+						data:{token:token,appInfo:appInfo,status:base64.encode(status),gotopage:p,pageSize:pageSize,totalRows:totalRows},
+						dataType: 'json', //服务器返回json格式数据
+						async:false, 
+						success: function(DT) {
+							if(DT.code != '1') {
+								console.log(DT.msg);
+							} else {
+								console.log(DT)
+								var html = template(DT.data.dataList);
+								if(status==2){
+									totalRows2=DT.data.totalRows;
+								}else if(status==1){
+									totalRows1=DT.data.totalRows;
+								}else if(status==3){
+									totalRows3=DT.data.totalRows;
+								}
+								if(p > 1) {
+									$('#scroll' + status).append(html);
+								} else {
+									$('#scroll' + status).html(html);
+								}
+								dataLen=DT.data.dataList.length;
+								curPage=DT.data.curPage;
+								if(slideType==1){
+									if(ajaxContent && ajaxContent.getAttribute('tappage') != '') {
+										ajaxContent.setAttribute('tappage', parseInt(p) + 1);
+									}
+								}else if(slideType==2){
+									ajaxContent.setAttribute('tappage', parseInt(p));
+								}
+								if(ajaxContent && ajaxContent.getAttribute('tapcount') != '') {
+									ajaxContent.setAttribute('tapcount', DT.data.totalRows);
+								}
+							}
+						}
+					});
+				}
+			};
+			function template(DT){//生成文档片段
+				console.log(DT)
+				var result="";
+				for(var i in DT){
+					var state= DT[i].status;
+            		if(state==2){
+            			state="已付款";
+            		}else if(state==1){
+            			state="待付款";
+            		}else if(state==3){
+            			state="付款失败";
+            		}
+					result+='<ul class="cR-ul">'+
+			                '<li>'+
+			                	'<label>充值到：</label>'+
+			                	'<div class="cR-li-r">'+DT[i].name+'</div>'+
+			                '</li>'+
+			                '<li>'+
+			                	'<label>支付金额：</label>'+
+			                	'<div class="cR-li-r">'+DT[i].amount+'元</div>'+
+			                '</li>'+
+			                '<li>'+
+			                	'<label>支付状态：</label>'+
+			                	'<div class="cR-li-r">'+state+'</div>'+
+			                '</li>'+
+			                '<li>'+
+			                	'<label>订单号：</label>'+
+			                	'<div class="cR-li-r">'+DT[i].order_id+'</div>'+
+			                '</li>'+
+			                '<li>'+
+			                	'<label>支付时间：</label>'+
+			                	'<div class="cR-li-r">'+DT[i].create_time+'</div>'+
+			                '</li>'+
+			            '</ul>';
+				}
+				return result;
+			}
+			
+		</script>
+	</body>
+
+</html>

@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>设置支付密码</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+    <link href="../../images/favicon.ico" rel="shortcut icon"/>
+    <link href="../../css/mui.css" rel="stylesheet"/>
+    <link href="../../css/myBasic.css" rel="stylesheet"/>
+</head>
+<body>
+	<div class="mui-view">
+		<header class="mui-bar mui-bar-nav">
+			<span class="mui-icon mui-icon-left-nav mui-pull-left" onclick="headerReturn()"></span>
+			<span class="mui-icon  mui-icon-close-nav mui-pull-right" id="closeActivity"></span>
+			<h1 class="mui-title">设置支付密码</h1>
+		</header>
+		<div class="mui-content">
+			<div class="mui-bar-nav bg-white">
+				<div class="mui-text-center ptb10 fs-14">正在设置手机号为&nbsp;<span id="mobileShow"></span>&nbsp;的支付密码</div>	
+				<input id="mobile" type="hidden" value="">
+			</div>
+			<div class="mui-content-padded">
+				<div class="mui-input-row code-row">
+			    	<button type="button" class="mui-btn mui-btn-danger" id="getCode" onclick="getCode()">获取验证码</button>
+			    	<div class="input-wrap mui-input-row">
+			        	<input type="text" id="smsCaptcha" class="mui-input-clear" placeholder="请输入验证码"><span class="mui-icon mui-icon-clear mui-hidden"></span>
+			    	</div>
+			    </div>
+			    <div class="mui-input-row">
+			        <input type="password" id="npwd" maxlength="6" class="mui-input-password mui-input-clear" placeholder="请输入支付密码">
+			    </div>
+			    <div class="mui-input-row">
+			        <input type="password" id="repwd" maxlength="6" class="mui-input-password mui-input-clear" placeholder="请再次输入支付密码">
+			    </div>
+			    <div id="errMsg" class="fs-14 text-err">支付密码仅支持6位纯数字</div>
+			</div>
+			<div class="pad10">
+				<button type="button" class="mui-btn mui-btn-danger mui-btn-block" onclick="setPwdSubmit()">确定</button>
+			</div>
+		</div>
+	</div>
+	<script src="../../js/jquery-1.11.1.min.js"></script>
+	<script src="../../js/layer/layer.js"></script>
+	<script src="../../js/mui.min.js"></script>
+	<script src="../../js/base64.min.js"></script>
+	<script src="../../js/myCommon.js"></script>
+	<script type="text/javascript">
+		var base64=new Base64();
+		var token=base64.encode(GetQueryString("token"));
+		$.ajax({
+	        url: "/api/member/info",
+	        type: "post",
+	        data:{token:token},
+	        dataType: "json",
+	        success: function(data) {
+	           	console.log(data) 
+	            if(data.code == 1){
+	            	var data=data.data;
+	              	$("#mobile").val(data.mobile);
+	              	$("#mobileShow").html(data.mobile.slice(0,3)+"****"+data.mobile.slice(7));
+	            }
+	        }
+	    });
+		function getCode(){
+			$("#getCode").val("");
+			var mobile=base64.encode($("#mobile").val());
+			var sentType=base64.encode("50");
+			$.ajax({
+		        url: "/api/member/sentSmsCaptcha/ntoken",
+		        type: "post",
+		        data:{token:token,mobile:mobile,sentType:sentType},
+		        dataType: "json",
+		        success: function(data) {
+		            console.log(data);
+		            if(data.code == 1){
+		            	layer.msg("验证码发送成功！");
+		            	var num=120;
+		            	var timer=setInterval(function(){
+		            		num--;
+		            		$("#getCode").attr("disabled",true).html("重新获取("+num+")");
+			            	if(num==0){
+			            		clearInterval(timer);
+			            		$("#getCode").removeAttr("disabled").html("获取验证码");
+			            	}
+		            	},1000)
+		            }else{
+		            	layer.msg(data.msg);
+		            }
+		        }
+		    });
+		}
+		function setPwdSubmit(){
+			if($("#smsCaptcha").val()==""){
+				layer.msg("请输入验证码！")
+				return;
+			}
+			if($("#npwd").val()==""){
+				$("#errMsg").html("请输入支付密码！");
+				return;
+			};
+			var regPwd = new RegExp(/^[0-9]{6}$/);
+		    if (!regPwd.test($("#npwd").val())) {
+		    	$("#errMsg").html("支付密码必须为6位纯数字！");
+		        return;
+		    }
+			if($("#repwd").val()==""){
+				$("#errMsg").html("请再次输入支付密码！");
+				return;
+			};
+			if($("#npwd").val()!=$("#repwd").val()){
+				$("#errMsg").html("两次输入的密码不一致！");
+				return;
+			};
+			$("#errMsg").html("&nbsp;");
+			var payPassword=base64.encode($.trim($("#npwd").val()));
+			var mobile=base64.encode($("#mobile").val());
+			var smsCaptcha=base64.encode($("#smsCaptcha").val());
+			$.ajax({
+	            url: "/api/member/setOrForgetPayPassword",
+	            type: "post",
+	            data:{token:token,mobile:mobile,smsCaptcha:smsCaptcha,payPassword:payPassword},
+	            dataType: "json",
+	            success: function(data) {
+	                console.log(data);
+	                if(data.code == 1){
+	                	layer.msg("设置成功！");
+	                	setTimeout(function(){
+	                		if(GetQueryString("appType")=="android"){
+	                			window.sdk.payPwdSetSuccess();
+	            			}else if(GetQueryString("appType")=="ios"){
+	            				location.href= "jfsdk://payPwdSetSuccess";
+	            			}else{
+	            				mui.back();
+	            			}
+	                	},2000)
+	                }else{
+	                	layer.msg(data.msg);
+	                }
+	            }
+	        });
+		}
+	</script>
+</body>
+</html>
